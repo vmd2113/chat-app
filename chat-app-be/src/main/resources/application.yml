@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: chat-app
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/chatapp_db
+    username: jsm_admin
+    password: 123456
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: TodoListHikariCP
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: your-google-client-id
+            client-secret: your-google-client-secret
+            scope: email, profile
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# Tùy chỉnh JWT
+jwt:
+  secret: your-jwt-secret-key-should-be-very-long-and-secure-use-at-least-256-bits
+  expiration: 86400000  # 24 giờ tính bằng milliseconds
+  refresh-expiration: 604800000  # 7 ngày tính bằng milliseconds
+
+# Tùy chỉnh MinIO
+minio:
+  endpoint: http://localhost:9000
+  access-key: your-minio-access-key
+  secret-key: your-minio-secret-key
+  bucket: chat-app-files
