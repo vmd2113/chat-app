@@ -15,12 +15,12 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
-    show-sql: true
+      ddl-auto: update
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false
 
   security:
     oauth2:
@@ -48,3 +48,8 @@ minio:
   access-key: your-minio-access-key
   secret-key: your-minio-secret-key
   bucket: chat-app-files
+
+
+  # management:
+management.endpoints.web.exposure.include: health,info,metrics,prometheus
+management.endpoint.health.show-details: always
