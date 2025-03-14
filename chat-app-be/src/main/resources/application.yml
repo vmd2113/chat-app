@@ -36,6 +36,12 @@ server:
   servlet:
     context-path: /api
 
+
+flyway:
+  baseline-on-migrate: true
+  locations: classpath:db/migration
+  enabled: true
+
 # Tùy chỉnh JWT
 jwt:
   secret: your-jwt-secret-key-should-be-very-long-and-secure-use-at-least-256-bits
