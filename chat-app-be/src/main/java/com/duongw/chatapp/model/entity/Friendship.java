@@ -29,5 +29,6 @@ public class Friendship extends BaseIdentityEntity {
     private Users addressee;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
     private FriendshipStatus friendshipStatus = FriendshipStatus.PENDING;
 }

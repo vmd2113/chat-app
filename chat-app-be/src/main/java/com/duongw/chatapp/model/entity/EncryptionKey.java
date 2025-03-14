@@ -40,4 +40,12 @@ public class EncryptionKey extends BaseIdentityEntity {
 
     @Column(name = "expires_at")
     private Instant expiresAt;
+
+    public boolean isExpired() {
+        return expiresAt != null && Instant.now().isAfter(expiresAt);
+    }
+
+    public boolean isActive() {
+        return !isExpired();
+    }
 }

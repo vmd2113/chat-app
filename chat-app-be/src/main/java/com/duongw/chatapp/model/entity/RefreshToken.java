@@ -35,6 +35,8 @@ public class RefreshToken extends BaseIdentityEntity {
     @Column(nullable = false)
     private Boolean revoked = false;
 
+
+
     public boolean isExpired() {
         return Instant.now().isAfter(this.expiresAt);
     }

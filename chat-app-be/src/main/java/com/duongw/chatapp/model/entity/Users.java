@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Table(name = "users")
@@ -46,6 +48,40 @@ public class Users extends BaseIdentityEntity {
 
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
+
+    // In Users.java
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<FriendGroup> friendGroups = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserOauth> oauthConnections = new HashSet<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private UserSettings settings;
+
+
+    public void addOAuthConnection(String provider, String providerUserId) {
+        UserOauth oauthConnection = new UserOauth();
+        oauthConnection.setUsers(this);
+        oauthConnection.setProvider(provider);
+        oauthConnection.setProviderUserId(providerUserId);
+        this.oauthConnections.add(oauthConnection);
+    }
+
+    // Helper method to initialize settings
+    @PrePersist
+    private void initializeSettings() {
+        if (this.settings == null) {
+            this.settings = UserSettings.builder()
+                    .user(this)
+                    .notificationEnabled(true)
+                    .notificationSound(true)
+                    .showStatus(true)
+                    .language("vi")
+                    .theme("light")
+                    .build();
+        }
+    }
 
 
 }

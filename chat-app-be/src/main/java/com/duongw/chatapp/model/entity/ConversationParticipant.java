@@ -41,6 +41,10 @@ public class ConversationParticipant extends BaseIdentityEntity {
     @Column(name = "left_at")
     private Instant leftAt;
 
+    public boolean isActive() {
+        return leftAt == null;
+    }
+
 
 
 }
