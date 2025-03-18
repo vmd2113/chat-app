@@ -49,7 +49,10 @@ public class Users extends BaseIdentityEntity {
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
 
-    // In Users.java
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserRole> userRoles = new HashSet<>();
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<FriendGroup> friendGroups = new HashSet<>();
 
@@ -68,7 +71,6 @@ public class Users extends BaseIdentityEntity {
         this.oauthConnections.add(oauthConnection);
     }
 
-    // Helper method to initialize settings
     @PrePersist
     private void initializeSettings() {
         if (this.settings == null) {
@@ -81,6 +83,22 @@ public class Users extends BaseIdentityEntity {
                     .theme("light")
                     .build();
         }
+    }
+
+    public void addRole(Role role) {
+        UserRole userRole = new UserRole();
+        userRole.setUser(this);
+        userRole.setRole(role);
+        userRoles.add(userRole);
+    }
+
+    public void removeRole(Role role) {
+        userRoles.removeIf(userRole -> userRole.getRole().equals(role));
+    }
+
+    public boolean hasRole(String roleName) {
+        return userRoles.stream()
+                .anyMatch(userRole -> userRole.getRole().getName().equals(roleName));
     }
 
 
