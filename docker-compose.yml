@@ -52,37 +52,37 @@ services:
             timeout: 20s
             retries: 3
 
+    backend:
+        build: ./chat-app-be
+        container_name: chatapp-backend
+        depends_on:
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            minio:
+                condition: service_healthy
+        environment:
+            SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/chatapp_db
+            SPRING_DATASOURCE_USERNAME: postgres
+            SPRING_DATASOURCE_PASSWORD: postgres
+            SPRING_REDIS_HOST: redis
+            SPRING_REDIS_PORT: 6379
+            MINIO_ENDPOINT: http://minio:9000
+            MINIO_ACCESS_KEY: minioadmin
+            MINIO_SECRET_KEY: minioadmin
+        ports:
+            - "8080:8080"
+
+    frontend:
+        build: ./chat-app-fe
+        container_name: chatapp-frontend
+        depends_on:
+            - backend
+        ports:
+            - "5173:5173"
+
 volumes:
     postgres-data:
     redis-data:
     minio-data:
-
-backend:
-    build: ./backend
-    container_name: chatapp-backend
-    depends_on:
-        postgres:
-            condition: service_healthy
-        redis:
-            condition: service_healthy
-        minio:
-            condition: service_healthy
-    environment:
-        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/chatapp_db
-        SPRING_DATASOURCE_USERNAME: postgres
-        SPRING_DATASOURCE_PASSWORD: postgres
-        SPRING_REDIS_HOST: redis
-        SPRING_REDIS_PORT: 6379
-        MINIO_ENDPOINT: http://minio:9000
-        MINIO_ACCESS_KEY: minioadmin
-        MINIO_SECRET_KEY: minioadmin
-    ports:
-        - "8080:8080"
-
-frontend:
-    build: ./frontend
-    container_name: chatapp-frontend
-    depends_on:
-        - backend
-    ports:
-        - "5173:5173"
