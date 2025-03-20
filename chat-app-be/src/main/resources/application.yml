@@ -31,20 +31,25 @@ spring:
             client-secret: your-google-client-secret
             scope: email, profile
 
+  flyway:
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    enabled: true
+    postgresql:
+      transactional-lock: false
+
+
 server:
   port: 8080
   servlet:
     context-path: /api
 
 
-flyway:
-  baseline-on-migrate: true
-  locations: classpath:db/migration
-  enabled: true
+
 
 # Tùy chỉnh JWT
 jwt:
-  secret: your-jwt-secret-key-should-be-very-long-and-secure-use-at-least-256-bits
+  secret: "bd77e101243fcdc9c53e88cc567f53e97b3e3308420c0f1d2c10f16329e1d78941f06913ea916dbfc314cd8913c26aa8d00f866a5e7cda2ef7c6412935cdac44bd84e9d7d261a9a286a8ce7cfe3dd352e984beee62076fbd37b1eaec6f6812e025a1a7440f341a8bece19e76f4877e55d9adb68e8293ef1716a8b1fc49f819d184564b3a6c10ea0574fe2851556a058d29d1554df52170608a8a09482fac5491d6e4e2ab4aec54d0f4046b4cf006ebbf6440a3350d22923039597328efe31efc15bd98b38e9d870cdb435ca604ae8d314134a029539477b555d46566684efceb393f15f072b49ceddf7b451daa5d51a17b4df5c4fd59c65728786e3d30fbb4d6"
   expiration: 86400000  # 24 giờ tính bằng milliseconds
   refresh-expiration: 604800000  # 7 ngày tính bằng milliseconds
 

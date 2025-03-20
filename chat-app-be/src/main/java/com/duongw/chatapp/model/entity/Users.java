@@ -3,6 +3,7 @@ package com.duongw.chatapp.model.entity;
 
 import com.duongw.chatapp.model.base.BaseIdentityEntity;
 import com.duongw.chatapp.model.enums.UserStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -65,7 +66,7 @@ public class Users extends BaseIdentityEntity {
 
     public void addOAuthConnection(String provider, String providerUserId) {
         UserOauth oauthConnection = new UserOauth();
-        oauthConnection.setUsers(this);
+        oauthConnection.setUser(this);
         oauthConnection.setProvider(provider);
         oauthConnection.setProviderUserId(providerUserId);
         this.oauthConnections.add(oauthConnection);

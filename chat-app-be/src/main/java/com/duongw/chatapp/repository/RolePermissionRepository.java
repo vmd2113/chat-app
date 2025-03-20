@@ -11,9 +11,16 @@ import java.util.Optional;
 
 @Repository
 public interface RolePermissionRepository extends JpaRepository<RolePermission, Long> {
+
     List<RolePermission> findByRole(Role role);
+
+    List<RolePermission> findByRoleId(Long roleId);
+
     List<RolePermission> findByPermission(Permission permission);
+
     Optional<RolePermission> findByRoleAndPermission(Role role, Permission permission);
+
     boolean existsByRoleAndPermission(Role role, Permission permission);
+
     void deleteByRoleAndPermission(Role role, Permission permission);
 }

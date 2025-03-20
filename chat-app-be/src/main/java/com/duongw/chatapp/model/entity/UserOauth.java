@@ -18,7 +18,7 @@ public class UserOauth extends BaseIdentityEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private Users users;
+    private Users user;
 
     @Column(name = "provider", nullable = false)
     private String provider;
