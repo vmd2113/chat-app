@@ -23,18 +23,19 @@ import java.time.Instant;
 public abstract class BaseEntity implements Serializable {
 
     @CreatedDate
-    @Column(name = "create_at")
+    @Column(name = "created_at")
     private Instant createdAt;
 
     @LastModifiedDate
-    @Column(name = "update_at")
+    @Column(name = "updated_at")
     private Instant updateAt;
 
-    @CreatedBy
-    @Column(name = "created_by")
-    private String createdBy;
-
-    @LastModifiedBy
-    @Column(name = "updated_by")
-    private String updatedBy;
+//
+//    @CreatedBy
+//    @Column(name = "created_by")
+//    private String createdBy;
+//
+//    @LastModifiedBy
+//    @Column(name = "updated_by")
+//    private String updatedBy;
 }

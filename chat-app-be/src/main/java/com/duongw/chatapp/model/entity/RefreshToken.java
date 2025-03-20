@@ -2,6 +2,7 @@ package com.duongw.chatapp.model.entity;
 
 
 import com.duongw.chatapp.model.base.BaseIdentityEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,6 +19,7 @@ public class RefreshToken extends BaseIdentityEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private Users user;
 
     @Column(nullable = false)

@@ -9,6 +9,7 @@ import com.duongw.chatapp.model.entity.Permission;
 import com.duongw.chatapp.repository.PermissionRepository;
 import com.duongw.chatapp.service.IPermissionService;
 import com.duongw.chatapp.validation.PermissionValidator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,18 +20,13 @@ import java.util.List;
 @Service
 @Slf4j
 
+@RequiredArgsConstructor
 public class PermissionService implements IPermissionService {
 
     private final PermissionRepository permissionRepository;
     private final PermissionMapper permissionMapper;
     private final PermissionValidator permissionValidator;
 
-
-    private PermissionService(PermissionRepository permissionRepository, PermissionMapper permissionMapper, PermissionValidator permissionValidator) {
-        this.permissionRepository = permissionRepository;
-        this.permissionMapper = permissionMapper;
-        this.permissionValidator = permissionValidator;
-    }
 
     private Permission findById(Long permissionId) {
         return permissionRepository.findById(permissionId).orElseThrow(() -> new ResourceNotFoundException("Permission", "id", permissionId));

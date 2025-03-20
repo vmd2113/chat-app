@@ -5,6 +5,7 @@ import com.duongw.chatapp.security.auth.CustomsUserDetailService;
 import com.duongw.chatapp.security.filter.JwtAuthenticationFilter;
 import com.duongw.chatapp.security.token.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
+@Slf4j
 public class WebSecurityConfig {
 
     private final CustomsUserDetailService customsUserDetailService;
@@ -47,14 +49,16 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        log.info("WEB SECURITY CONFIG -> securityFilterChain");
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {
                 })
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

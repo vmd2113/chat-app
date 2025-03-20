@@ -17,6 +17,8 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 
+@Entity
+@Table(name = "messages_content")
 public class MessageContent {
 
     @EmbeddedId
