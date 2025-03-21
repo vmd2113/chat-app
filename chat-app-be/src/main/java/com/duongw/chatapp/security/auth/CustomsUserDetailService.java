@@ -25,9 +25,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustomsUserDetailService implements UserDetailsService {
 
-    private UserRepository userRepository;
-    private IUserRoleService userRoleService;
-    private IRolePermissionService permissionService;
+    private final UserRepository userRepository;
+    private final IUserRoleService userRoleService;
+    private final IRolePermissionService permissionService;
 
 
     @Override

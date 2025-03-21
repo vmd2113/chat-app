@@ -71,20 +71,20 @@ public class Users extends BaseIdentityEntity {
         oauthConnection.setProviderUserId(providerUserId);
         this.oauthConnections.add(oauthConnection);
     }
-
-    @PrePersist
-    private void initializeSettings() {
-        if (this.settings == null) {
-            this.settings = UserSettings.builder()
-                    .user(this)
-                    .notificationEnabled(true)
-                    .notificationSound(true)
-                    .showStatus(true)
-                    .language("vi")
-                    .theme("light")
-                    .build();
-        }
-    }
+//
+//    @PrePersist
+//    private void initializeSettings() {
+//        if (this.settings == null) {
+//            this.settings = UserSettings.builder()
+//                    .user(this)
+//                    .notificationEnabled(true)
+//                    .notificationSound(true)
+//                    .showStatus(true)
+//                    .language("vi")
+//                    .theme("light")
+//                    .build();
+//        }
+//    }
 
     public void addRole(Role role) {
         UserRole userRole = new UserRole();

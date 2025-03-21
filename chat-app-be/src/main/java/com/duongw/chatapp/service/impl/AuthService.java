@@ -127,11 +127,14 @@ public class AuthService implements IAuthService {
                     .email(registerRequest.getEmail())
                     .password(passwordEncoder.encode(registerRequest.getPassword()))
                     .fullName(registerRequest.getFullName())
-                    .status(UserStatus.OFFLINE) // Pending email verification
+
                     .emailVerified(false) // Requires email verification
                     .build();
 
             // Save user
+
+            // Thiết lập status sau khi đã tạo đối tượng user
+            user.setStatus(UserStatus.OFFLINE);
             user = userRepository.save(user);
 
             // Assign default role (ROLE_USER)
