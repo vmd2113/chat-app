@@ -2,6 +2,7 @@ package com.duongw.chatapp.controller;
 
 
 import com.duongw.chatapp.config.AppConstant;
+import com.duongw.chatapp.exception.BadRequestException;
 import com.duongw.chatapp.model.base.ApiResponse;
 import com.duongw.chatapp.model.dto.request.user.ChangePasswordRequest;
 import com.duongw.chatapp.model.dto.request.user.UserProfileUpdateRequest;
@@ -57,10 +58,14 @@ public class UserProfileController {
             @AuthenticationPrincipal AuthUserDetails currentUser) {
         log.info("REST request to change password for user: {}", currentUser.getUsername());
 
-        // TODO: Implement changePassword method in UserService
-        // userService.changePassword(currentUser.getUsername(),
-        //     changePasswordRequest.getCurrentPassword(),
-        //     changePasswordRequest.getNewPassword());
+        // Validate password confirmation
+        if (!changePasswordRequest.getNewPassword().equals(changePasswordRequest.getConfirmPassword())) {
+            throw new BadRequestException("New password and confirmation do not match");
+        }
+
+        userService.changePassword(
+                currentUser.getUsername(),
+                changePasswordRequest);
 
         return ResponseEntity.ok(ApiResponse.success(null));
     }

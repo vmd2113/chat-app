@@ -85,9 +85,21 @@ public class UserValidator {
 
     }
 
-    //TODO: validate change user info for user
-    public void updateUserInformation(UserProfileUpdateRequest userProfileUpdateRequest, Long excludeUserId) {
+    public void updateUserInformation(UserProfileUpdateRequest updateRequest, Long userId) {
+        log.info("USER-VALIDATOR -> updateUserInformation");
 
+        // Check for email changes (if applicable)
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().isEmpty()) {
+            validateDuplicateInfo(updateRequest.getEmail(), userId);
+
+            if (!validateEmail(updateRequest.getEmail())) {
+                throw new BadRequestException("Invalid email format");
+            }
+        }
+
+        if (updateRequest.getFullName() != null && updateRequest.getFullName().isEmpty()) {
+            throw new BadRequestException("Full name cannot be empty");
+        }
     }
 
 
@@ -102,6 +114,28 @@ public class UserValidator {
             }
         } catch (AlreadyExistedException e) {
             throw new AlreadyExistedException(e.getMessage());
+        }
+    }
+
+    public void validatePasswordChange(String currentPassword, String newPassword, String confirmPassword) {
+        // Check if new password is empty
+        if (newPassword == null || newPassword.isEmpty()) {
+            throw new BadRequestException("New password cannot be empty");
+        }
+
+        // Check if new password meets requirements
+        if (!validatePassword(newPassword)) {
+            throw new BadRequestException("Password must contain at least 8 characters including uppercase, lowercase, numbers and special characters");
+        }
+
+        // Check if passwords match
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BadRequestException("New password and confirmation do not match");
+        }
+
+        // Current password cannot be the same as new password
+        if (currentPassword.equals(newPassword)) {
+            throw new BadRequestException("New password must be different from current password");
         }
     }
 

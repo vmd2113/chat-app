@@ -2,6 +2,7 @@ package com.duongw.chatapp.service.impl;
 
 import com.duongw.chatapp.exception.ResourceNotFoundException;
 import com.duongw.chatapp.model.dto.mapper.UserMapper;
+import com.duongw.chatapp.model.dto.request.user.ChangePasswordRequest;
 import com.duongw.chatapp.model.dto.request.user.UserCreateRequest;
 import com.duongw.chatapp.model.dto.request.user.UserProfileUpdateRequest;
 import com.duongw.chatapp.model.dto.request.user.UserUpdateRequest;
@@ -10,9 +11,11 @@ import com.duongw.chatapp.model.entity.Users;
 import com.duongw.chatapp.model.enums.UserStatus;
 import com.duongw.chatapp.repository.UserRepository;
 import com.duongw.chatapp.service.IUserService;
+import com.duongw.chatapp.utils.StringUtil;
 import com.duongw.chatapp.validation.UserValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +30,8 @@ public class UserService implements IUserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final UserValidator userValidator;
+    private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public List<UserResponseDTO> getAllUsers() {
@@ -59,7 +64,7 @@ public class UserService implements IUserService {
     public UserResponseDTO createUser(UserCreateRequest userCreateRequest) {
         log.info("USER-SERVICE -> createUser");
         userValidator.validateCreateUser(userCreateRequest);
-        Users user =  Users.builder()
+        Users user = Users.builder()
                 .email(userCreateRequest.getEmail())
                 .avatar(userCreateRequest.getAvatar())
                 .password(userCreateRequest.getPassword())
@@ -93,8 +98,30 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
-    public UserResponseDTO updateUserProfile(UserProfileUpdateRequest userProfileUpdateRequest) {
-        return null;
+    public UserResponseDTO updateUserProfile(UserProfileUpdateRequest updateRequest) {
+        log.info("USER-SERVICE -> updateUserProfile for email: {}", updateRequest.getEmail());
+
+        // Find the user
+        Users user = userRepository.findByEmail(updateRequest.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", updateRequest.getEmail()));
+
+        // Validate update data
+        userValidator.updateUserInformation(updateRequest, user.getId());
+
+        // Update fields if provided
+        if (StringUtil.isNotNullOrEmpty(updateRequest.getFullName())) {
+            user.setFullName(updateRequest.getFullName());
+        }
+
+        if (StringUtil.isNotNullOrEmpty(updateRequest.getAvatar())) {
+            user.setAvatar(updateRequest.getAvatar());
+        }
+
+        // Save the updated user
+        Users updatedUser = userRepository.save(user);
+
+        // Return the updated user DTO
+        return userMapper.toDto(updatedUser);
     }
 
     @Transactional
@@ -107,6 +134,29 @@ public class UserService implements IUserService {
             userRepository.save(user);
         }
         return userMapper.toDto(user);
+    }
+
+    @Transactional
+    @Override
+    public void changePassword(String email, ChangePasswordRequest changePasswordRequest) {
+        log.info("Changing password for user: {}", email);
+
+
+        userValidator.validatePasswordChange(changePasswordRequest.getCurrentPassword(), changePasswordRequest.getNewPassword(), changePasswordRequest.getConfirmPassword());
+        // Find user
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+
+
+        // Update password
+        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+        userRepository.save(user);
+
+        log.info("Password changed successfully for user: {}", email);
+
+        // Optionally: Revoke all refresh tokens to force re-login on all devices
+        refreshTokenService.revokeAllUserTokens(user);
     }
 
     // TODO: Implement changeUserEmailVerified

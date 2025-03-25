@@ -1,9 +1,6 @@
 package com.duongw.chatapp.service.impl;
 
-import com.duongw.chatapp.exception.BadRequestException;
-import com.duongw.chatapp.exception.InvalidTokenException;
-import com.duongw.chatapp.exception.OAuthException;
-import com.duongw.chatapp.exception.ResourceNotFoundException;
+import com.duongw.chatapp.exception.*;
 import com.duongw.chatapp.model.dto.request.token.RefreshTokenRequest;
 import com.duongw.chatapp.model.dto.request.user.UserLoginRequest;
 import com.duongw.chatapp.model.dto.request.user.UserRegisterRequest;
@@ -21,8 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -104,9 +100,18 @@ public class AuthService implements IAuthService {
                     .permissions(permissions)
                     .build();
 
+        } catch (BadCredentialsException e) {
+            log.error("Invalid credentials for user: {}", loginRequest.getEmail());
+            throw new BadRequestException("Invalid email or password");
+        } catch (DisabledException e) {
+            log.error("Account disabled for user: {}", loginRequest.getEmail());
+            throw new UnauthorizedException("Account is disabled");
+        } catch (LockedException e) {
+            log.error("Account locked for user: {}", loginRequest.getEmail());
+            throw new UnauthorizedException("Account is locked");
         } catch (Exception e) {
             log.error("Authentication failed for user: {}", loginRequest.getEmail(), e);
-            throw e;
+            throw new UnauthorizedException("Authentication failed: " + e.getMessage());
         }
     }
 

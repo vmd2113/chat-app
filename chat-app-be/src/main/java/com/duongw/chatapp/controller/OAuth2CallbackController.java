@@ -23,22 +23,38 @@ public class OAuth2CallbackController {
 
     @GetMapping("/google")
     public ResponseEntity<ApiResponse<?>> handleGoogleCallback(@RequestParam("code") String code) {
-        log.info("Received Google callback with code: {}", code);
+        log.info("Received Google callback with code");
+        return processOAuthCallback("google", code);
+    }
 
+    @GetMapping("/github")
+    public ResponseEntity<ApiResponse<?>> handleGithubCallback(@RequestParam("code") String code) {
+        log.info("Received GitHub callback with code");
+        return processOAuthCallback("github", code);
+    }
+
+    private ResponseEntity<ApiResponse<?>> processOAuthCallback(String provider, String code) {
         try {
-            // Process the OAuth2 code and generate tokens
-            AuthResponse authResponse = authService.processOAuth2Login("google", code);
+            AuthResponse authResponse = authService.processOAuth2Login(provider, code);
 
-            // Instead of returning JSON, redirect to the frontend with tokens
-            // For a quick test, you can just return the AuthResponse
+            // For API response
             return ResponseEntity.ok(ApiResponse.success(authResponse));
 
-            // In a real application, you would redirect to your frontend
-            // URI frontendUri = URI.create("http://localhost:5173/login/success?token=" + authResponse.getAccessToken());
-            // return ResponseEntity.status(HttpStatus.FOUND).location(frontendUri).build();
+            // For frontend redirect (uncomment if needed)
+            /*
+            String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/auth/callback")
+                    .queryParam("token", authResponse.getAccessToken())
+                    .queryParam("refreshToken", authResponse.getRefreshToken())
+                    .build().toUriString();
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(URI.create(redirectUrl));
+            return new ResponseEntity<>(headers, HttpStatus.FOUND);
+            */
         } catch (Exception e) {
-            log.error("Error processing Google callback", e);
-            return ResponseEntity.internalServerError().body(ApiResponse.error(String.valueOf(500), e.getMessage()));
+            log.error("Error processing OAuth callback", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("OAUTH_ERROR", e.getMessage()));
         }
     }
 }

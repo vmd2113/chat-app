@@ -69,6 +69,10 @@ public class Users extends BaseIdentityEntity {
         oauthConnection.setUser(this);
         oauthConnection.setProvider(provider);
         oauthConnection.setProviderUserId(providerUserId);
+        if (this.oauthConnections == null) {
+            this.oauthConnections = new HashSet<>();
+        }
+
         this.oauthConnections.add(oauthConnection);
     }
 //
