@@ -16,4 +16,7 @@ public interface IAuthService {
     void logout(String refreshToken);
 
     void logoutAll(Long userId);
+
+    // Add this to IAuthService.java
+    AuthResponse processOAuth2Login(String provider, String code);
 }

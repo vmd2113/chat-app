@@ -5,7 +5,6 @@ import com.duongw.chatapp.model.entity.Role;
 import com.duongw.chatapp.model.entity.Users;
 import com.duongw.chatapp.repository.UserRepository;
 import com.duongw.chatapp.service.IRolePermissionService;
-import com.duongw.chatapp.service.IRoleService;
 import com.duongw.chatapp.service.IUserRoleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

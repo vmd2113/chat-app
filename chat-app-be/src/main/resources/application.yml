@@ -27,8 +27,8 @@ spring:
       client:
         registration:
           google:
-            client-id: your-google-client-id
-            client-secret: your-google-client-secret
+            client-id: 378426217894-u8gt484p0c3cjtd6qrkv22ru978hkrgg.apps.googleusercontent.com
+            client-secret: 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
             scope: email, profile
 
   flyway:
@@ -41,8 +41,10 @@ spring:
 
 server:
   port: 8080
-  servlet:
-    context-path: /dev
+
+
+oauth2:
+  redirect-uri: http://localhost:8080/oauth2/callback
 
 
 

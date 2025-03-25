@@ -57,6 +57,7 @@ public class WebSecurityConfig {
                 })
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/moderator/**").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()

@@ -102,6 +102,12 @@
             <version>10.10.0</version>
         </dependency>
 
+        <!-- Spring Security oauth2-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
 
         <!-- MapStruct -->
         <dependency>
