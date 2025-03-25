@@ -1,68 +1,62 @@
 spring:
-  application:
-    name: chat-app
+    application:
+        name: chat-app
 
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/chatapp_db
-    username: jsm_admin
-    password: 123456
-    hikari:
-      minimum-idle: 5
-      maximum-pool-size: 20
-      idle-timeout: 30000
-      pool-name: TodoListHikariCP
+    datasource:
+        driver-class-name: org.postgresql.Driver
+        url: jdbc:postgresql://localhost:5432/chatapp_db
+        username: jsm_admin
+        password: 123456
+        hikari:
+            minimum-idle: 5
+            maximum-pool-size: 20
+            idle-timeout: 30000
+            pool-name: TodoListHikariCP
 
-  jpa:
-    hibernate:
-      ddl-auto: none
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    show-sql: false
+    jpa:
+        hibernate:
+            ddl-auto: none
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+                format_sql: true
+        show-sql: false
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: 378426217894-u8gt484p0c3cjtd6qrkv22ru978hkrgg.apps.googleusercontent.com
-            client-secret: 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
-            scope: email, profile
+    security:
+        oauth2:
+            client:
+                registration:
+                    google:
+                        client-id: [your-google-client-id]
+                        client-secret: [your-google-client-secret]
+                        scope: email, profile
 
-  flyway:
-    baseline-on-migrate: true
-    locations: classpath:db/migration
-    enabled: true
-    postgresql:
-      transactional-lock: false
-
+    flyway:
+        baseline-on-migrate: true
+        locations: classpath:db/migration
+        enabled: true
+        postgresql:
+            transactional-lock: false
 
 server:
-  port: 8080
-
+    port: 8080
 
 oauth2:
-  redirect-uri: http://localhost:8080/oauth2/callback
-
-
-
+    redirect-uri: http://localhost:8080/oauth2/callback
 
 # Tùy chỉnh JWT
 jwt:
-  secret: "bd77e101243fcdc9c53e88cc567f53e97b3e3308420c0f1d2c10f16329e1d78941f06913ea916dbfc314cd8913c26aa8d00f866a5e7cda2ef7c6412935cdac44bd84e9d7d261a9a286a8ce7cfe3dd352e984beee62076fbd37b1eaec6f6812e025a1a7440f341a8bece19e76f4877e55d9adb68e8293ef1716a8b1fc49f819d184564b3a6c10ea0574fe2851556a058d29d1554df52170608a8a09482fac5491d6e4e2ab4aec54d0f4046b4cf006ebbf6440a3350d22923039597328efe31efc15bd98b38e9d870cdb435ca604ae8d314134a029539477b555d46566684efceb393f15f072b49ceddf7b451daa5d51a17b4df5c4fd59c65728786e3d30fbb4d6"
-  expiration: 86400000  # 24 giờ tính bằng milliseconds
-  refresh-expiration: 604800000  # 7 ngày tính bằng milliseconds
+    secret: "bd77e101243fcdc9c53e88cc567f53e97b3e3308420c0f1d2c10f16329e1d78941f06913ea916dbfc314cd8913c26aa8d00f866a5e7cda2ef7c6412935cdac44bd84e9d7d261a9a286a8ce7cfe3dd352e984beee62076fbd37b1eaec6f6812e025a1a7440f341a8bece19e76f4877e55d9adb68e8293ef1716a8b1fc49f819d184564b3a6c10ea0574fe2851556a058d29d1554df52170608a8a09482fac5491d6e4e2ab4aec54d0f4046b4cf006ebbf6440a3350d22923039597328efe31efc15bd98b38e9d870cdb435ca604ae8d314134a029539477b555d46566684efceb393f15f072b49ceddf7b451daa5d51a17b4df5c4fd59c65728786e3d30fbb4d6"
+    expiration: 86400000 # 24 giờ tính bằng milliseconds
+    refresh-expiration: 604800000 # 7 ngày tính bằng milliseconds
 
 # Tùy chỉnh MinIO
 minio:
-  endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
-  bucket: chat-app-files
+    endpoint: http://localhost:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket: chat-app-files
 
-
-  # management:
+    # management:
 management.endpoints.web.exposure.include: health,info,metrics,prometheus
 management.endpoint.health.show-details: always
