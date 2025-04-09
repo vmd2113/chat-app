@@ -32,9 +32,6 @@ public interface IUserService {
 
     void deleteUser(Long userId);
 
-    void requestPasswordReset(String email);
-
-    void resetPassword (PasswordResetRequest request);
 
     UserSettingsResponseDTO getUserSettings(Long userId);
 

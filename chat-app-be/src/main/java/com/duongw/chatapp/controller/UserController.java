@@ -99,21 +99,6 @@ public class UserController {
     }
 
 
-    // TODO: request password reset
-    @PostMapping("/request-password-reset")
-    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(@RequestParam("email") String email) {
-        log.info("REST request to request password reset for: {}", email);
-        userService.requestPasswordReset(email);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-    //TODO: reset password
-    @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetRequest  resetRequest) {
-        log.info("REST request to reset password with token");
-        userService.resetPassword(resetRequest);
-        return ResponseEntity.ok(ApiResponse.success(null));
-    }
-
     @PostMapping("/resend-verification")
     public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@RequestParam("email") String email) {
         log.info("REST request to resend verification email to: {}", email);

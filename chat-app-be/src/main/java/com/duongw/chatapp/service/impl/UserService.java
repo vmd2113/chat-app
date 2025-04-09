@@ -45,10 +45,7 @@ public class UserService implements IUserService {
     private final RefreshTokenService refreshTokenService;
 
     private final UserStatusService userStatusService;
-    private final ResetTokenRepository resetTokenRepository;
-    private final EmailService emailService;
     private final UserSettingRepository userSettingRepository;
-
     private final UserSettingMapper userSettingMapper;
 
     @Override
@@ -199,62 +196,6 @@ public class UserService implements IUserService {
         }
     }
 
-
-
-    @Transactional
-    @Override
-    public void requestPasswordReset(String email) {
-        Users user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
-
-        // Generate reset token
-        String token = UUID.randomUUID().toString();
-
-        // Save token (create reset token entity and repository)
-        ResetToken resetToken = ResetToken.builder()
-                .user(user)
-                .token(token)
-                .expiryDate(Instant.now().plus(1, ChronoUnit.HOURS))
-                .build();
-
-        resetTokenRepository.save(resetToken);
-
-        // Send email with reset link
-        String resetLink = "http://localhost:/reset-password?token=" + token;
-        emailService.sendPasswordResetEmail(user.getEmail(), user.getFullName(), resetLink);
-    }
-
-    /**
-     * Resets password using a valid reset token
-     * @param resetRequest Contains token and new password
-     */
-    @Transactional
-    @Override
-    public void resetPassword(PasswordResetRequest resetRequest) {
-        // Validate token
-        ResetToken resetToken = resetTokenRepository.findByToken(resetRequest.getToken())
-                .orElseThrow(() -> new InvalidTokenException("Reset token not found"));
-
-        if (resetToken.isExpired()) {
-            throw new InvalidTokenException("Reset token has expired");
-        }
-
-        // Validate new password
-        if (!resetRequest.getNewPassword().equals(resetRequest.getConfirmPassword())) {
-            throw new BadRequestException("Passwords do not match");
-        }
-
-        // Update password
-        Users user = resetToken.getUser();
-        user.setPassword(passwordEncoder.encode(resetRequest.getNewPassword()));
-        userRepository.save(user);
-
-        // Delete token
-        resetTokenRepository.delete(resetToken);
-
-        // Revoke all refresh tokens
-        refreshTokenService.revokeAllUserTokens(user);
-    }
 
     /**
      * Updates user status and logs activity

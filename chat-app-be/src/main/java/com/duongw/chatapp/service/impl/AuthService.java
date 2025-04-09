@@ -2,15 +2,13 @@ package com.duongw.chatapp.service.impl;
 
 import com.duongw.chatapp.exception.*;
 import com.duongw.chatapp.model.dto.request.token.RefreshTokenRequest;
+import com.duongw.chatapp.model.dto.request.user.PasswordResetRequest;
 import com.duongw.chatapp.model.dto.request.user.UserLoginRequest;
 import com.duongw.chatapp.model.dto.request.user.UserRegisterRequest;
 import com.duongw.chatapp.model.dto.response.auth.AuthResponse;
 import com.duongw.chatapp.model.entity.*;
 import com.duongw.chatapp.model.enums.UserStatus;
-import com.duongw.chatapp.repository.RoleRepository;
-import com.duongw.chatapp.repository.UserOauthRepository;
-import com.duongw.chatapp.repository.UserRepository;
-import com.duongw.chatapp.repository.VerificationTokenRepository;
+import com.duongw.chatapp.repository.*;
 import com.duongw.chatapp.security.auth.AuthUserDetails;
 import com.duongw.chatapp.security.token.JwtTokenProvider;
 import com.duongw.chatapp.service.*;
@@ -48,12 +46,13 @@ public class AuthService implements IAuthService {
     private final IUserRoleService userRoleService;
     private final IRolePermissionService rolePermissionService;
     private final IRefreshTokenService refreshTokenService;
+    private final ResetTokenRepository resetTokenRepository;
+    private final EmailService emailService;
     private final HttpServletRequest request;
     private final IOAuth2Service oAuth2Service;
     private final UserOauthRepository userOauthRepository;
 
     private final VerificationTokenRepository verificationTokenRepository;
-    private final EmailService emailService;
 
     @Value("${app.verification.expiry-hours}")
     private int verificationExpiryHours;
@@ -294,6 +293,60 @@ public class AuthService implements IAuthService {
             throw new RuntimeException("Logout from all devices failed: " + e.getMessage(), e);
         }
     }
+
+    @Transactional
+    public void requestPasswordReset(String email) {
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        // Generate reset token
+        String token = StringUtil.generateUUID();
+
+        // Save token (create reset token entity and repository)
+        ResetToken resetToken = ResetToken.builder()
+                .user(user)
+                .token(token)
+                .expiryDate(Instant.now().plus(1, ChronoUnit.HOURS))
+                .build();
+
+        resetTokenRepository.save(resetToken);
+
+        // Send email with reset link
+        String resetLink = "http://localhost:8080/api/auth/reset-password?token=" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getFullName(), resetLink);
+    }
+
+    /**
+     * Resets password using a valid reset token
+     * @param resetRequest Contains token and new password
+     */
+    @Transactional
+    public void resetPassword(PasswordResetRequest resetRequest) {
+        // Validate token
+        ResetToken resetToken = resetTokenRepository.findByToken(resetRequest.getToken())
+                .orElseThrow(() -> new InvalidTokenException("Reset token not found"));
+
+        if (resetToken.isExpired()) {
+            throw new InvalidTokenException("Reset token has expired");
+        }
+
+        // Validate new password
+        if (!resetRequest.getNewPassword().equals(resetRequest.getConfirmPassword())) {
+            throw new BadRequestException("Passwords do not match");
+        }
+
+        // Update password
+        Users user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(resetRequest.getNewPassword()));
+        userRepository.save(user);
+
+        // Delete token
+        resetTokenRepository.delete(resetToken);
+
+        // Revoke all refresh tokens
+        refreshTokenService.revokeAllUserTokens(user);
+    }
+
 
     @Override
     @Transactional

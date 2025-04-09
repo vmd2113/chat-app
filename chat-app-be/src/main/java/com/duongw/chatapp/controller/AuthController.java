@@ -4,6 +4,7 @@ package com.duongw.chatapp.controller;
 import com.duongw.chatapp.exception.BadRequestException;
 import com.duongw.chatapp.model.base.ApiResponse;
 import com.duongw.chatapp.model.dto.request.token.RefreshTokenRequest;
+import com.duongw.chatapp.model.dto.request.user.PasswordResetRequest;
 import com.duongw.chatapp.model.dto.request.user.UserLoginRequest;
 import com.duongw.chatapp.model.dto.request.user.UserRegisterRequest;
 import com.duongw.chatapp.model.dto.response.auth.AuthResponse;
@@ -82,6 +83,25 @@ public class AuthController {
     }
 
 
+
+    // TODO: request password reset
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(@RequestParam("email") String email) {
+        log.info("REST request to request password reset for: {}", email);
+        authService.requestPasswordReset(email);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+    //TODO: reset password
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetRequest resetRequest) {
+        log.info("REST request to reset password with token");
+        authService.resetPassword(resetRequest);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+
+
+
     public ResponseEntity<ApiResponse<AuthResponse>> oauth2Callback(
             @PathVariable String provider,
             @RequestParam String code) {
@@ -89,6 +109,8 @@ public class AuthController {
         AuthResponse authResponse = authService.processOAuth2Login(provider, code);
         return ResponseEntity.ok(ApiResponse.success(authResponse));
     }
+
+
 
     @GetMapping("/oauth2/authorize/{provider}")
     public ResponseEntity<ApiResponse<String>> getAuthorizationUrl(@PathVariable String provider) {
