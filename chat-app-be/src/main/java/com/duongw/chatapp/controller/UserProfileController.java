@@ -6,7 +6,9 @@ import com.duongw.chatapp.exception.BadRequestException;
 import com.duongw.chatapp.model.base.ApiResponse;
 import com.duongw.chatapp.model.dto.request.user.ChangePasswordRequest;
 import com.duongw.chatapp.model.dto.request.user.UserProfileUpdateRequest;
+import com.duongw.chatapp.model.dto.request.usersetting.UserSettingsUpdateRequest;
 import com.duongw.chatapp.model.dto.response.user.UserResponseDTO;
+import com.duongw.chatapp.model.dto.response.usersetting.UserSettingsResponseDTO;
 import com.duongw.chatapp.security.auth.AuthUserDetails;
 import com.duongw.chatapp.service.IUserService;
 import jakarta.validation.Valid;
@@ -80,5 +82,29 @@ public class UserProfileController {
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
+
+
+    //TODO: get user setting
+    @GetMapping("/me/settings")
+    public ResponseEntity<ApiResponse<UserSettingsResponseDTO>> getUserSettings(
+            @AuthenticationPrincipal AuthUserDetails currentUser) {
+        log.info("REST request to get settings for user: {}", currentUser.getUser().getEmail());
+        UserSettingsResponseDTO settings = userService.getUserSettings(currentUser.getUser().getId());
+        return ResponseEntity.ok(ApiResponse.success(settings));
+    }
+
+
+    //TODO: update user setting
+
+    @PutMapping("/me/settings")
+    public ResponseEntity<ApiResponse<UserSettingsResponseDTO>> updateUserSettings(
+            @Valid @RequestBody UserSettingsUpdateRequest settingsRequest,
+            @AuthenticationPrincipal AuthUserDetails currentUser) {
+        log.info("REST request to update settings for user: {}", currentUser.getUser().getEmail());
+
+        UserSettingsResponseDTO settings = userService.updateUserSettings(
+                currentUser.getUser().getId(), settingsRequest);
+        return ResponseEntity.ok(ApiResponse.success(settings));
+    }
 
 }

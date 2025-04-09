@@ -10,9 +10,11 @@ import com.duongw.chatapp.model.enums.UserStatus;
 import com.duongw.chatapp.repository.RoleRepository;
 import com.duongw.chatapp.repository.UserOauthRepository;
 import com.duongw.chatapp.repository.UserRepository;
+import com.duongw.chatapp.repository.VerificationTokenRepository;
 import com.duongw.chatapp.security.auth.AuthUserDetails;
 import com.duongw.chatapp.security.token.JwtTokenProvider;
 import com.duongw.chatapp.service.*;
+import com.duongw.chatapp.service.email.EmailService;
 import com.duongw.chatapp.utils.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +29,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -47,6 +51,15 @@ public class AuthService implements IAuthService {
     private final HttpServletRequest request;
     private final IOAuth2Service oAuth2Service;
     private final UserOauthRepository userOauthRepository;
+
+    private final VerificationTokenRepository verificationTokenRepository;
+    private final EmailService emailService;
+
+    @Value("${app.verification.expiry-hours}")
+    private int verificationExpiryHours;
+
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
 
 
@@ -150,6 +163,20 @@ public class AuthService implements IAuthService {
             Role userRole = roleRepository.findByName("ROLE_USER")
                     .orElseThrow(() -> new ResourceNotFoundException("Role", "name", "ROLE_USER"));
             userRoleService.assignRoleToUser(user, userRole);
+
+
+            String token = StringUtil.generateUUID();
+            VerificationToken verificationToken = VerificationToken.builder()
+                    .token(token)
+                    .users(user)
+                    .expiryDate(Instant.now().plus(verificationExpiryHours, ChronoUnit.HOURS))
+                    .build();
+
+            verificationTokenRepository.save(verificationToken);
+            // Send verification email
+
+            String verificationLink = frontendUrl + "/verify-email?token=" + token;
+            emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
 
             // Generate JWT
             String accessToken = jwtTokenProvider.generateTokenFromMail(user.getEmail());
@@ -365,5 +392,52 @@ public class AuthService implements IAuthService {
             log.error("OAuth2 login failed for provider: {}", provider, e);
             throw new OAuthException("Failed to process OAuth2 login: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public void verifyEmail(String token) {
+
+        VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Verification token", "token", token));
+
+        if (verificationToken.isExpired()){
+            throw new InvalidTokenException("Verification token has expired");
+        }
+
+        Users users = verificationToken.getUsers();
+
+        users.setEmailVerified(true);
+        userRepository.save(users);
+        verificationTokenRepository.delete(verificationToken);
+
+    }
+
+    @Override
+    public void resendVerificationEmail(String email) {
+
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        if (user.getEmailVerified()) {
+            throw new BadRequestException("Email is already verified");
+        }
+
+        // Delete any existing tokens
+        verificationTokenRepository.deleteByUsers(user);
+
+        // Create new token
+        String token = UUID.randomUUID().toString();
+        VerificationToken verificationToken = VerificationToken.builder()
+                .token(token)
+                .users(user)
+                .expiryDate(Instant.now().plus(verificationExpiryHours, ChronoUnit.HOURS))
+                .build();
+
+        verificationTokenRepository.save(verificationToken);
+
+        // Send verification email
+        String verificationLink = frontendUrl + "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(user.getEmail(), user.getFullName(), verificationLink);
+
     }
 }

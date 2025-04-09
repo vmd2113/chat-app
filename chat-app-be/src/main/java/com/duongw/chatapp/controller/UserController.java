@@ -3,15 +3,21 @@ package com.duongw.chatapp.controller;
 
 import com.duongw.chatapp.config.AppConstant;
 import com.duongw.chatapp.model.base.ApiResponse;
+import com.duongw.chatapp.model.dto.request.user.PasswordResetRequest;
 import com.duongw.chatapp.model.dto.request.user.UserCreateRequest;
 import com.duongw.chatapp.model.dto.request.user.UserProfileUpdateRequest;
 import com.duongw.chatapp.model.dto.request.user.UserUpdateRequest;
+import com.duongw.chatapp.model.dto.request.usersetting.UserSettingsUpdateRequest;
 import com.duongw.chatapp.model.dto.response.user.UserResponseDTO;
+import com.duongw.chatapp.model.dto.response.usersetting.UserSettingsResponseDTO;
+import com.duongw.chatapp.security.auth.AuthUserDetails;
+import com.duongw.chatapp.service.IAuthService;
 import com.duongw.chatapp.service.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +29,7 @@ import java.util.List;
 public class UserController {
 
     private final IUserService userService;
+    private final IAuthService authService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponseDTO>>> getAllUsers() {
@@ -82,16 +89,6 @@ public class UserController {
         UserResponseDTO user = userService.changeUserStatus(id, status);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
-//
-//    @PutMapping("/{id}/email-verified/{verified}")
-//    public ResponseEntity<ApiResponse<UserResponseDTO>> changeEmailVerifiedStatus(
-//            @PathVariable("id") Long id,
-//            @PathVariable("verified") Boolean verified) {
-//        log.info("REST request to change email verification status to {} for user with ID: {}", verified, id);
-//        UserResponseDTO user = userService.changeUserEmailVerified(id, verified);
-//        return ResponseEntity.ok(ApiResponse.success(user));
-//    }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
@@ -99,6 +96,29 @@ public class UserController {
         log.info("REST request to delete user with ID: {}", id);
         userService.deleteUser(id);
         return ResponseEntity.ok(ApiResponse.noContent());
+    }
+
+
+    // TODO: request password reset
+    @PostMapping("/request-password-reset")
+    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(@RequestParam("email") String email) {
+        log.info("REST request to request password reset for: {}", email);
+        userService.requestPasswordReset(email);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+    //TODO: reset password
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetRequest  resetRequest) {
+        log.info("REST request to reset password with token");
+        userService.resetPassword(resetRequest);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@RequestParam("email") String email) {
+        log.info("REST request to resend verification email to: {}", email);
+        authService.resendVerificationEmail(email);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
 

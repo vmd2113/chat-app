@@ -1,16 +1,24 @@
 package com.duongw.chatapp.service.impl;
 
+import com.duongw.chatapp.exception.BadRequestException;
+import com.duongw.chatapp.exception.InvalidTokenException;
 import com.duongw.chatapp.exception.ResourceNotFoundException;
 import com.duongw.chatapp.model.dto.mapper.UserMapper;
-import com.duongw.chatapp.model.dto.request.user.ChangePasswordRequest;
-import com.duongw.chatapp.model.dto.request.user.UserCreateRequest;
-import com.duongw.chatapp.model.dto.request.user.UserProfileUpdateRequest;
-import com.duongw.chatapp.model.dto.request.user.UserUpdateRequest;
+import com.duongw.chatapp.model.dto.mapper.UserSettingMapper;
+import com.duongw.chatapp.model.dto.request.user.*;
+import com.duongw.chatapp.model.dto.request.usersetting.UserSettingsUpdateRequest;
 import com.duongw.chatapp.model.dto.response.user.UserResponseDTO;
+import com.duongw.chatapp.model.dto.response.usersetting.UserSettingsResponseDTO;
+import com.duongw.chatapp.model.entity.ResetToken;
+import com.duongw.chatapp.model.entity.UserSettings;
 import com.duongw.chatapp.model.entity.Users;
 import com.duongw.chatapp.model.enums.UserStatus;
+import com.duongw.chatapp.repository.ResetTokenRepository;
 import com.duongw.chatapp.repository.UserRepository;
+import com.duongw.chatapp.repository.UserSettingRepository;
+import com.duongw.chatapp.repository.UserStatusLogRepository;
 import com.duongw.chatapp.service.IUserService;
+import com.duongw.chatapp.service.email.EmailService;
 import com.duongw.chatapp.utils.StringUtil;
 import com.duongw.chatapp.validation.UserValidator;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +27,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -32,6 +43,13 @@ public class UserService implements IUserService {
     private final UserValidator userValidator;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+
+    private final UserStatusService userStatusService;
+    private final ResetTokenRepository resetTokenRepository;
+    private final EmailService emailService;
+    private final UserSettingRepository userSettingRepository;
+
+    private final UserSettingMapper userSettingMapper;
 
     @Override
     public List<UserResponseDTO> getAllUsers() {
@@ -179,5 +197,154 @@ public class UserService implements IUserService {
         if (user != null) {
             userRepository.delete(user);
         }
+    }
+
+
+
+    @Transactional
+    @Override
+    public void requestPasswordReset(String email) {
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+
+        // Generate reset token
+        String token = UUID.randomUUID().toString();
+
+        // Save token (create reset token entity and repository)
+        ResetToken resetToken = ResetToken.builder()
+                .user(user)
+                .token(token)
+                .expiryDate(Instant.now().plus(1, ChronoUnit.HOURS))
+                .build();
+
+        resetTokenRepository.save(resetToken);
+
+        // Send email with reset link
+        String resetLink = "http://localhost:/reset-password?token=" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), user.getFullName(), resetLink);
+    }
+
+    /**
+     * Resets password using a valid reset token
+     * @param resetRequest Contains token and new password
+     */
+    @Transactional
+    @Override
+    public void resetPassword(PasswordResetRequest resetRequest) {
+        // Validate token
+        ResetToken resetToken = resetTokenRepository.findByToken(resetRequest.getToken())
+                .orElseThrow(() -> new InvalidTokenException("Reset token not found"));
+
+        if (resetToken.isExpired()) {
+            throw new InvalidTokenException("Reset token has expired");
+        }
+
+        // Validate new password
+        if (!resetRequest.getNewPassword().equals(resetRequest.getConfirmPassword())) {
+            throw new BadRequestException("Passwords do not match");
+        }
+
+        // Update password
+        Users user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(resetRequest.getNewPassword()));
+        userRepository.save(user);
+
+        // Delete token
+        resetTokenRepository.delete(resetToken);
+
+        // Revoke all refresh tokens
+        refreshTokenService.revokeAllUserTokens(user);
+    }
+
+    /**
+     * Updates user status and logs activity
+     * @param userId User ID
+     * @param status New status
+     * @return Updated user
+     */
+    @Transactional
+    @Override
+    public UserResponseDTO updateUserStatus(Long userId, UserStatus status) {
+        Users user = findById(userId);
+
+        // Update status
+        user.setStatus(status);
+        user.setLastActive(Instant.now());
+        userRepository.save(user);
+
+        // Log status change
+        userStatusService.logStatusChange(userId, status);
+
+        return userMapper.toDto(user);
+    }
+
+    /**
+     * Retrieves user settings
+     * @param userId User ID
+     * @return User settings
+     */
+    @Override
+    public UserSettingsResponseDTO getUserSettings(Long userId) {
+        Users user = findById(userId);
+        UserSettings settings = user.getSettings();
+
+        if (settings == null) {
+            // Create default settings if they don't exist
+            settings = UserSettings.builder()
+                    .user(user)
+                    .notificationEnabled(true)
+                    .notificationSound(true)
+                    .showStatus(true)
+                    .language("en")
+                    .theme("light")
+                    .build();
+
+            userSettingRepository.save(settings);
+            user.setSettings(settings);
+        }
+
+        return userSettingMapper.toDto(settings);
+    }
+
+    /**
+     * Updates user settings
+     * @param userId User ID
+     * @param settingsRequest New settings
+     * @return Updated settings
+     */
+    @Transactional
+    @Override
+    public UserSettingsResponseDTO updateUserSettings(Long userId, UserSettingsUpdateRequest settingsRequest) {
+        Users user = findById(userId);
+        UserSettings settings = user.getSettings();
+
+        if (settings == null) {
+            settings = new UserSettings();
+            settings.setUser(user);
+        }
+
+        // Update settings
+        if (settingsRequest.getNotificationEnabled() != null) {
+            settings.setNotificationEnabled(settingsRequest.getNotificationEnabled());
+        }
+
+        if (settingsRequest.getNotificationSound() != null) {
+            settings.setNotificationSound(settingsRequest.getNotificationSound());
+        }
+
+        if (settingsRequest.getShowStatus() != null) {
+            settings.setShowStatus(settingsRequest.getShowStatus());
+        }
+
+        if (settingsRequest.getLanguage() != null) {
+            settings.setLanguage(settingsRequest.getLanguage());
+        }
+
+        if (settingsRequest.getTheme() != null) {
+            settings.setTheme(settingsRequest.getTheme());
+        }
+
+        userSettingRepository.save(settings);
+        return userSettingMapper.toDto(settings);
     }
 }

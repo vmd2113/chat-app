@@ -7,6 +7,7 @@ import com.duongw.chatapp.model.dto.request.token.RefreshTokenRequest;
 import com.duongw.chatapp.model.dto.request.user.UserLoginRequest;
 import com.duongw.chatapp.model.dto.request.user.UserRegisterRequest;
 import com.duongw.chatapp.model.dto.response.auth.AuthResponse;
+import com.duongw.chatapp.security.auth.AuthUserDetails;
 import com.duongw.chatapp.service.IAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -67,6 +69,19 @@ public class AuthController {
     }
 
 
+    /**
+     * Logs out a user from all devices by revoking all their refresh tokens
+     */
+    @PostMapping("/logout-all")
+    public ResponseEntity<ApiResponse<Void>> logoutAll(
+            @AuthenticationPrincipal AuthUserDetails currentUser) {
+        log.info("REST request to logout user from all devices: {}", currentUser.getUsername());
+
+        authService.logoutAll(currentUser.getUser().getId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+
     public ResponseEntity<ApiResponse<AuthResponse>> oauth2Callback(
             @PathVariable String provider,
             @RequestParam String code) {
@@ -95,6 +110,30 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success(authorizationUrl));
     }
+
+    /**
+     * Verifies a user's email address using the token from the verification email
+     */
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@RequestParam("token") String token) {
+        log.info("REST request to verify email with token");
+
+        authService.verifyEmail(token);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    /**
+     * Resends the verification email to a user
+     */
+    @PostMapping("/resend-verification")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(@RequestParam("email") String email) {
+        log.info("REST request to resend verification email to: {}", email);
+
+        authService.resendVerificationEmail(email);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+
 
 
 

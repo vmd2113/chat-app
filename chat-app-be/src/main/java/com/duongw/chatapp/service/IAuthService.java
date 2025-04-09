@@ -19,4 +19,8 @@ public interface IAuthService {
 
     // Add this to IAuthService.java
     AuthResponse processOAuth2Login(String provider, String code);
+
+    void verifyEmail(String token);
+
+    void resendVerificationEmail(String email);
 }

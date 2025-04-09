@@ -1,10 +1,10 @@
 package com.duongw.chatapp.service;
 
-import com.duongw.chatapp.model.dto.request.user.ChangePasswordRequest;
-import com.duongw.chatapp.model.dto.request.user.UserCreateRequest;
-import com.duongw.chatapp.model.dto.request.user.UserProfileUpdateRequest;
-import com.duongw.chatapp.model.dto.request.user.UserUpdateRequest;
+import com.duongw.chatapp.model.dto.request.user.*;
+import com.duongw.chatapp.model.dto.request.usersetting.UserSettingsUpdateRequest;
 import com.duongw.chatapp.model.dto.response.user.UserResponseDTO;
+import com.duongw.chatapp.model.dto.response.usersetting.UserSettingsResponseDTO;
+import com.duongw.chatapp.model.enums.UserStatus;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -31,5 +31,15 @@ public interface IUserService {
     UserResponseDTO changeUserEmailVerified(Long userId, Boolean emailVerified);
 
     void deleteUser(Long userId);
+
+    void requestPasswordReset(String email);
+
+    void resetPassword (PasswordResetRequest request);
+
+    UserSettingsResponseDTO getUserSettings(Long userId);
+
+    UserSettingsResponseDTO updateUserSettings(Long userId, UserSettingsUpdateRequest userSettingsUpdateRequest);
+
+    UserResponseDTO updateUserStatus(Long userId, UserStatus status);
 
 }
