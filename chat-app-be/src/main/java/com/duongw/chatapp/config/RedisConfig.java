@@ -22,24 +22,19 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfig {
 
-    @Value("${REDIS_HOST:localhost}")
+    @Value("${spring.data.redis.host}")
     private String redisHost;
 
 
-    @Value("${REDIS_PORT:6379}")
-    private String redisPort;
+    @Value("${spring.data.redis.port}")
+    private int redisPort;
 
-    @Value("${REDIS_PASSWORD}")
-    private String redisPassword;
 
 
 
     @Bean
     public JedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, Integer.parseInt(redisPort));
-        if (redisPassword != null) {
-            config.setPassword(redisPassword);
-        }
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
         return new JedisConnectionFactory(config);
     }
 
@@ -47,6 +42,7 @@ public class RedisConfig {
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory){
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory);
+
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());

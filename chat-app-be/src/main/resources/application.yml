@@ -59,8 +59,13 @@ spring:
     data:
         redis:
             port: 6379
-            host: 60000
-            password: ${REDIS_PASSWORD}
+            host: localhost
+
+            jedis:
+              pool:
+                  max-active: 8
+                  max-idle: 8
+                  min-idle: 2
 
     cache:
         type: redis
