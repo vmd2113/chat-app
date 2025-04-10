@@ -7,12 +7,14 @@ import com.duongw.chatapp.model.dto.request.user.UserLoginRequest;
 import com.duongw.chatapp.model.dto.request.user.UserRegisterRequest;
 import com.duongw.chatapp.model.dto.response.auth.AuthResponse;
 import com.duongw.chatapp.model.entity.*;
+import com.duongw.chatapp.model.enums.RateLimitingType;
 import com.duongw.chatapp.model.enums.UserStatus;
 import com.duongw.chatapp.repository.*;
 import com.duongw.chatapp.security.auth.AuthUserDetails;
 import com.duongw.chatapp.security.token.JwtTokenProvider;
 import com.duongw.chatapp.service.*;
 import com.duongw.chatapp.service.email.EmailService;
+import com.duongw.chatapp.service.ratelimiting.RateLimitingService;
 import com.duongw.chatapp.utils.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +54,8 @@ public class AuthService implements IAuthService {
     private final IOAuth2Service oAuth2Service;
     private final UserOauthRepository userOauthRepository;
 
+    private final RateLimitingService rateLimitingService;
+
     private final VerificationTokenRepository verificationTokenRepository;
 
     @Value("${app.verification.expiry-hours}")
@@ -66,6 +70,10 @@ public class AuthService implements IAuthService {
     @Transactional
     public AuthResponse login(UserLoginRequest loginRequest) {
         log.info("Authenticating user: {}", loginRequest.getEmail());
+
+        if (rateLimitingService.isExceeded(RateLimitingType.LOGIN_ATTEMPT, loginRequest.getEmail())){
+            throw new TooManyRequestException("Too many login attempts. Please try again later.");
+        }
 
         try {
             // Authenticate the user
@@ -296,6 +304,11 @@ public class AuthService implements IAuthService {
 
     @Transactional
     public void requestPasswordReset(String email) {
+
+        if (rateLimitingService.isExceeded(RateLimitingType.PASSWORD_RESET, email)){
+            throw new TooManyRequestException("Too many password reset requests. Please try again later.");
+        }
+
         Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
@@ -449,6 +462,10 @@ public class AuthService implements IAuthService {
 
     @Override
     public void verifyEmail(String token) {
+
+        if (rateLimitingService.isExceeded(RateLimitingType.VERIFICATION_EMAIL, token)){
+            throw new TooManyRequestException("Too many email verification attempts. Please try again later.");
+        }
 
         VerificationToken verificationToken = verificationTokenRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Verification token", "token", token));

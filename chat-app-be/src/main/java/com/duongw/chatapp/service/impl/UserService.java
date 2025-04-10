@@ -23,6 +23,10 @@ import com.duongw.chatapp.utils.StringUtil;
 import com.duongw.chatapp.validation.UserValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,6 +72,7 @@ public class UserService implements IUserService {
     }
 
     @Override
+    @Cacheable(value = "users", key = "#email", unless = "#result == null")
     public UserResponseDTO getUserByEmail(String email) {
         log.info("USER-SERVICE -> getUserByEmail");
         Users user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
@@ -95,6 +100,8 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
+    @CachePut(value = "users", key = "#result.email")
+    @CacheEvict(value = "users", key = "#userUpdateRequest.email")
     public UserResponseDTO updateUser(UserUpdateRequest userUpdateRequest) {
         log.info("USER-SERVICE -> updateUser");
 
@@ -188,6 +195,10 @@ public class UserService implements IUserService {
 
     @Transactional
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "users", key = "#userId"),
+            @CacheEvict(value = "userSettings", key = "#userId")
+    })
     public void deleteUser(Long userId) {
         log.info("USER-SERVICE -> deleteUser");
         Users user = findById(userId);
@@ -225,6 +236,7 @@ public class UserService implements IUserService {
      * @return User settings
      */
     @Override
+    @Cacheable(value = "userSettings", key = "#userId", unless = "#result == null")
     public UserSettingsResponseDTO getUserSettings(Long userId) {
         Users user = findById(userId);
         UserSettings settings = user.getSettings();
@@ -255,6 +267,7 @@ public class UserService implements IUserService {
      */
     @Transactional
     @Override
+    @CachePut(value = "userSettings", key = "#userId" )
     public UserSettingsResponseDTO updateUserSettings(Long userId, UserSettingsUpdateRequest settingsRequest) {
         Users user = findById(userId);
         UserSettings settings = user.getSettings();

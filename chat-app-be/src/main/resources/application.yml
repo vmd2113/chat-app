@@ -2,6 +2,7 @@ spring:
     application:
         name: chat-app
 
+
     datasource:
         driver-class-name: org.postgresql.Driver
         url: jdbc:postgresql://localhost:5432/chatapp_db
@@ -38,6 +39,7 @@ spring:
         postgresql:
             transactional-lock: false
 
+#mail
     mail:
         host: smtp.gmail.com
         port: 587
@@ -51,6 +53,21 @@ spring:
                         enable: true
                     ssl:
                         trust: smtp.gmail.com
+
+
+#redis
+    data:
+        redis:
+            port: 6379
+            host: 60000
+            password: ${REDIS_PASSWORD}
+
+    cache:
+        type: redis
+        redis:
+            time-to-live: 3600
+            cache-null-values: false
+
 
 server:
     port: 8080
